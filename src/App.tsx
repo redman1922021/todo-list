@@ -1,35 +1,96 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { useEffect, useState } from "react";
+import { fetchTodos, addTodo, deleteTodo, updateTodo } from "./api/api.ts";
+import Header from "./components/Header/Header.tsx";
+import List from "./components/List/List.tsx";
 
-function App() {
-  const [count, setCount] = useState(0)
-
-  return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+export interface Todo {
+    id: number;
+    title: string;
+    created: string;
+    isDone: boolean;
 }
 
-export default App
+export interface TodoInfo {
+    all: number;
+    completed: number;
+    inWork: number;
+}
+
+export interface MetaResponse<T, N> {
+    data: T[];
+    info?: N;
+    meta: {
+        totalAmount: number;
+    };
+}
+
+function App() {
+    const [todos, setTodos] = useState<Todo[]>([]);
+    const [todoInfo, setTodoInfo] = useState<TodoInfo | null>(null);
+    const [loading, setLoading] = useState<boolean>(true);
+
+    const loadTodos = async (filter: string = "all") => {
+        try {
+            setLoading(true);
+            const result = await fetchTodos(filter);
+            setTodos(result.data);
+
+            if (result.info) {
+                setTodoInfo(result.info);
+            }
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleAddTodo = async (title: string) => {
+        try {
+            await addTodo(title);
+            loadTodos();
+        } catch (error) {
+            console.error("Ошибка при добавлении задачи:", error);
+        }
+    };
+
+    const handleTodoDelete = async (id: number) => {
+        try {
+            await deleteTodo(id);
+            loadTodos();
+        } catch (error) {
+            console.error("Ошибка при удалении задачи:", error);
+        }
+    };
+
+    const handleTodoEdit = async (id: number, newTitle: string, isDone: boolean) => {
+        try {
+            await updateTodo(id, newTitle, isDone);
+            loadTodos();
+        } catch (error) {
+            console.error("Ошибка при редактировании задачи:", error);
+        }
+    };
+
+    useEffect(() => {
+        loadTodos();
+    }, []);
+
+    return (
+        <div>
+            <Header onAddTodo={handleAddTodo} />
+            {loading && <p>Загрузка...</p>}
+            {!loading && todoInfo && todos && (
+                <List
+                    todoInfo={todoInfo}
+                    todos={todos}
+                    onFilterChange={loadTodos}
+                    onTodoDelete={handleTodoDelete}
+                    onTodoEdit={handleTodoEdit}
+                />
+            )}
+        </div>
+    );
+}
+
+export default App;
