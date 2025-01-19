@@ -1,6 +1,6 @@
-import React, { useState } from "react";
+import React, {useState} from "react";
 import styles from "./List.module.scss";
-import { Todo, TodoFilter, TodoInfo } from "../../types/types.ts";
+import {Todo, TodoFilter, TodoInfo} from "../../types/types.ts";
 import Navigate from "../Navigate/Navigate.tsx";
 import ListItem from "../ListItem/ListItem.tsx";
 
@@ -10,6 +10,7 @@ interface ListProps {
     onFilterChange: (filter: TodoFilter) => void;
     onTodoDelete: (id: number) => void;
     onTodoEdit: (id: number, newTitle: string, isDone: boolean) => void;
+    currentFilter: TodoFilter;
 }
 
 const List: React.FC<ListProps> = ({
@@ -18,6 +19,7 @@ const List: React.FC<ListProps> = ({
                                        onFilterChange,
                                        onTodoDelete,
                                        onTodoEdit,
+                                       currentFilter
                                    }) => {
     const [editingId, setEditingId] = useState<number | null>(null);
     const [editedTitle, setEditedTitle] = useState<string>("");
@@ -44,9 +46,13 @@ const List: React.FC<ListProps> = ({
         onTodoEdit(id, editedTitle, !isDone);
     };
 
+    const handleFilterClick = (filter: TodoFilter) => {
+        onFilterChange(filter);
+    };
+
     return (
         <>
-            <Navigate todoInfo={todoInfo} onFilterChange={onFilterChange} />
+            <Navigate todoInfo={todoInfo} onFilterChange={handleFilterClick} currentFilter={currentFilter}/>
             <ul className={styles.list}>
                 {todos.map((todo) => (
                     <ListItem

@@ -1,16 +1,18 @@
-import { useEffect, useState } from "react";
-import { fetchTodos, deleteTodo, updateTodo } from "./api/api.ts";
-import Header from "./components/Header/Header.tsx";
-import List from "./components/List/List.tsx";
-import {Todo, TodoFilter, TodoInfo} from "./types/types.ts";
+import React, {useEffect, useState} from "react";
+import styles from "./Main.module.scss";
+import {Spin} from "antd";
+import {Todo, TodoFilter, TodoInfo} from "../../types/types.ts";
+import Header from "../Header/Header.tsx";
+import List from "../List/List.tsx";
+import {deleteTodo, fetchTodos, updateTodo} from "../../api/api.ts";
 
-const todoInfoDefault : TodoInfo = {
+const todoInfoDefault: TodoInfo = {
     all: 0,
     completed: 0,
     inWork: 0,
 }
 
-function App() {
+const Main: React.FC = () => {
     const [todos, setTodos] = useState<Todo[]>([]);
     const [todoInfo, setTodoInfo] = useState<TodoInfo>(todoInfoDefault);
     const [loading, setLoading] = useState<boolean>(false);
@@ -58,10 +60,18 @@ function App() {
         loadTodos();
     }, [currentFilter]);
 
+    useEffect(() => {
+        const intervalId = setInterval(() => {
+            loadTodos();
+        }, 5000);
+
+        return () => clearInterval(intervalId);
+    }, [currentFilter]);
+
     return (
-        <div>
-            <Header loadTodos={loadTodos} />
-            {!loading && <p>Загрузка...</p>}
+        <div className={styles.main}>
+            <Header loadTodos={loadTodos}/>
+            {!loading && <div className={styles.load}><Spin/></div>}
             {loading && todoInfo && todos && (
                 <List
                     todoInfo={todoInfo}
@@ -69,10 +79,11 @@ function App() {
                     onFilterChange={handleFilterChange}
                     onTodoDelete={handleTodoDelete}
                     onTodoEdit={handleTodoEdit}
+                    currentFilter={currentFilter}
                 />
             )}
         </div>
     );
 }
 
-export default App;
+export default Main;

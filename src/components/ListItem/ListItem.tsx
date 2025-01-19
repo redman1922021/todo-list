@@ -1,6 +1,6 @@
-// ListItem.tsx
 import styles from "./ListItem.module.scss";
-import { Todo } from "../../types/types.ts";
+import {Todo} from "../../types/types.ts";
+import {Button, Input} from "antd";
 
 interface ListItemProps {
     todo: Todo;
@@ -29,7 +29,7 @@ const ListItem: React.FC<ListItemProps> = ({
     return (
         <li className={styles.listItem}>
             {isEditing ? (
-                <input
+                <Input
                     type="text"
                     value={editedTitle}
                     onChange={(e) => onEditChange(e.target.value)}
@@ -40,35 +40,35 @@ const ListItem: React.FC<ListItemProps> = ({
             <div className={styles.buttons}>
                 {isEditing ? (
                     <>
-                        <button className={styles.save} onClick={() => onSave(todo.id, todo.isDone)}>
+                        <Button className={styles.save} onClick={() => onSave(todo.id, todo.isDone)}>
                             Сохранить
-                        </button>
-                        <button className={styles.cancel} onClick={onCancel}>
+                        </Button>
+                        <Button className={styles.cancel} onClick={onCancel}>
                             Отмена
-                        </button>
+                        </Button>
                     </>
                 ) : (
                     <>
-                        <input
+                        <Input
                             type="checkbox"
                             checked={todo.isDone}
                             onChange={() => onToggleDone(todo.id, todo.isDone)}
                         />
-                        <button
+                        <Button
                             className={styles.edit}
                             onClick={() => onStartEdit(todo.id, todo.title)}
                         >
                             Редактировать
-                        </button>
+                        </Button>
                     </>
                 )}
                 {!isEditing && (
-                    <button
+                    <Button
                         className={styles.delete}
                         onClick={() => onDelete(todo.id)}
                     >
                         Удалить
-                    </button>
+                    </Button>
                 )}
             </div>
         </li>

@@ -1,33 +1,33 @@
-import {MetaResponse, Todo, TodoInfo} from "../types/types.ts";
+import axios from "axios";
+import { MetaResponse, Todo, TodoInfo } from "../types/types.ts";
+
 const API_URL = "https://easydev.club/api/v1/todos";
 
 export const fetchTodos = async (filter: string = "all"): Promise<MetaResponse<Todo, TodoInfo>> => {
-    const response = await fetch(`${API_URL}?filter=${filter}`, {
-        method: "GET",
+    const response = await axios.get(`${API_URL}`, {
+        params: { filter },
         headers: {
             Accept: "application/json",
         },
     });
 
-    return await response.json();
+    return response.data;
 };
 
-export const addTodo = async (title: string): Promise<Todo> => {
-    const response = await fetch(API_URL, {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ title, isDone: false }),
-    });
-
-    const data = await response.json();
-    return data;
+export const addTodo = async (title: string): Promise<void> => {
+    await axios.post(
+        API_URL,
+        { title, isDone: false },
+        {
+            headers: {
+                "Content-Type": "application/json",
+            },
+        }
+    );
 };
 
 export const deleteTodo = async (id: number): Promise<void> => {
-    await fetch(`${API_URL}/${id}`, {
-        method: "DELETE",
+    await axios.delete(`${API_URL}/${id}`, {
         headers: {
             "Content-Type": "application/json",
         },
@@ -35,12 +35,13 @@ export const deleteTodo = async (id: number): Promise<void> => {
 };
 
 export const updateTodo = async (id: number, newTitle: string, isDone: boolean): Promise<void> => {
-    await fetch(`${API_URL}/${id}`, {
-        method: "PUT",
-        headers: {
-            "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ title: newTitle, isDone: isDone }),
-    });
+    await axios.put(
+        `${API_URL}/${id}`,
+        { title: newTitle, isDone },
+        {
+            headers: {
+                "Content-Type": "application/json",
+            },
+        }
+    );
 };
-
