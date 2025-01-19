@@ -1,38 +1,25 @@
 import { useEffect, useState } from "react";
-import { fetchTodos, addTodo, deleteTodo, updateTodo } from "./api/api.ts";
+import { fetchTodos, deleteTodo, updateTodo } from "./api/api.ts";
 import Header from "./components/Header/Header.tsx";
 import List from "./components/List/List.tsx";
+import {Todo, TodoFilter, TodoInfo} from "./types/types.ts";
 
-export interface Todo {
-    id: number;
-    title: string;
-    created: string;
-    isDone: boolean;
-}
-
-export interface TodoInfo {
-    all: number;
-    completed: number;
-    inWork: number;
-}
-
-export interface MetaResponse<T, N> {
-    data: T[];
-    info?: N;
-    meta: {
-        totalAmount: number;
-    };
+const todoInfoDefault : TodoInfo = {
+    all: 0,
+    completed: 0,
+    inWork: 0,
 }
 
 function App() {
     const [todos, setTodos] = useState<Todo[]>([]);
-    const [todoInfo, setTodoInfo] = useState<TodoInfo | null>(null);
-    const [loading, setLoading] = useState<boolean>(true);
+    const [todoInfo, setTodoInfo] = useState<TodoInfo>(todoInfoDefault);
+    const [loading, setLoading] = useState<boolean>(false);
+    const [currentFilter, setCurrentFilter] = useState<TodoFilter>(TodoFilter.ALL);
 
-    const loadTodos = async (filter: string = "all") => {
+    const loadTodos = async () => {
         try {
-            setLoading(true);
-            const result = await fetchTodos(filter);
+            setLoading(false);
+            const result = await fetchTodos(currentFilter);
             setTodos(result.data);
 
             if (result.info) {
@@ -41,23 +28,14 @@ function App() {
         } catch (err) {
             console.error(err);
         } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleAddTodo = async (title: string) => {
-        try {
-            await addTodo(title);
-            loadTodos();
-        } catch (error) {
-            console.error("Ошибка при добавлении задачи:", error);
+            setLoading(true);
         }
     };
 
     const handleTodoDelete = async (id: number) => {
         try {
             await deleteTodo(id);
-            loadTodos();
+            await loadTodos();
         } catch (error) {
             console.error("Ошибка при удалении задачи:", error);
         }
@@ -66,25 +44,29 @@ function App() {
     const handleTodoEdit = async (id: number, newTitle: string, isDone: boolean) => {
         try {
             await updateTodo(id, newTitle, isDone);
-            loadTodos();
+            await loadTodos();
         } catch (error) {
             console.error("Ошибка при редактировании задачи:", error);
         }
     };
 
+    const handleFilterChange = async (newFilter: TodoFilter) => {
+        setCurrentFilter(newFilter);
+    };
+
     useEffect(() => {
         loadTodos();
-    }, []);
+    }, [currentFilter]);
 
     return (
         <div>
-            <Header onAddTodo={handleAddTodo} />
-            {loading && <p>Загрузка...</p>}
-            {!loading && todoInfo && todos && (
+            <Header loadTodos={loadTodos} />
+            {!loading && <p>Загрузка...</p>}
+            {loading && todoInfo && todos && (
                 <List
                     todoInfo={todoInfo}
                     todos={todos}
-                    onFilterChange={loadTodos}
+                    onFilterChange={handleFilterChange}
                     onTodoDelete={handleTodoDelete}
                     onTodoEdit={handleTodoEdit}
                 />

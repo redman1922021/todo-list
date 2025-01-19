@@ -1,15 +1,24 @@
 import styles from "./Header.module.scss";
 import React, {useState} from "react";
+import {addTodo} from "../../api/api.ts";
 
-interface AddInputProps {
-    onAddTodo: (title: string) => void;
+interface loadTodosProps {
+    loadTodos: () => void;
 }
 
-
-function Header({ onAddTodo }: AddInputProps) {
+function Header({ loadTodos }: loadTodosProps) {
 
     const [inputValue, setInputValue] = useState<string>("");
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+    const handleAddTodo = async (title: string) => {
+        try {
+            await addTodo(title);
+            await loadTodos();
+        } catch (error) {
+            console.error("Ошибка при добавлении задачи:", error);
+        }
+    };
 
     const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         setInputValue(event.target.value);
@@ -34,7 +43,7 @@ function Header({ onAddTodo }: AddInputProps) {
         setErrorMessage(null);
 
         try {
-            await onAddTodo(inputValue);
+            await handleAddTodo(inputValue);
             setInputValue("");
         } catch (error) {
             console.error("Ошибка при добавлении задачи:", error);

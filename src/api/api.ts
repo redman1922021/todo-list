@@ -1,5 +1,4 @@
-import { Todo, TodoInfo, MetaResponse } from "../App";
-
+import {MetaResponse, Todo, TodoInfo} from "../types/types.ts";
 const API_URL = "https://easydev.club/api/v1/todos";
 
 export const fetchTodos = async (filter: string = "all"): Promise<MetaResponse<Todo, TodoInfo>> => {

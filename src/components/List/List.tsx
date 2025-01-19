@@ -1,22 +1,26 @@
-import { Todo, TodoInfo } from "../../App.tsx";
-import { useState } from "react";
+import React, { useState } from "react";
 import styles from "./List.module.scss";
+import { Todo, TodoFilter, TodoInfo } from "../../types/types.ts";
+import Navigate from "../Navigate/Navigate.tsx";
+import ListItem from "../ListItem/ListItem.tsx";
 
 interface ListProps {
     todos: Todo[];
     todoInfo: TodoInfo;
-    onFilterChange: (filter: string) => void;
+    onFilterChange: (filter: TodoFilter) => void;
     onTodoDelete: (id: number) => void;
     onTodoEdit: (id: number, newTitle: string, isDone: boolean) => void;
 }
 
-const List: React.FC<ListProps> = ({ todos, todoInfo, onFilterChange, onTodoDelete, onTodoEdit }) => {
+const List: React.FC<ListProps> = ({
+                                       todos,
+                                       todoInfo,
+                                       onFilterChange,
+                                       onTodoDelete,
+                                       onTodoEdit,
+                                   }) => {
     const [editingId, setEditingId] = useState<number | null>(null);
     const [editedTitle, setEditedTitle] = useState<string>("");
-
-    const handleFilterClick = (filter: string) => {
-        onFilterChange(filter);
-    };
 
     const handleEditClick = (id: number, title: string) => {
         setEditingId(id);
@@ -42,70 +46,22 @@ const List: React.FC<ListProps> = ({ todos, todoInfo, onFilterChange, onTodoDele
 
     return (
         <>
-            <div className={styles.wrapperNavigate}>
-                <div className={styles.text} onClick={() => handleFilterClick("all")}>
-                    Все ({todoInfo.all})
-                </div>
-                <div className={styles.text} onClick={() => handleFilterClick("inWork")}>
-                    В работе ({todoInfo.inWork})
-                </div>
-                <div className={styles.text} onClick={() => handleFilterClick("completed")}>
-                    Сделано ({todoInfo.completed})
-                </div>
-            </div>
+            <Navigate todoInfo={todoInfo} onFilterChange={onFilterChange} />
             <ul className={styles.list}>
-                {todos.map((todo) => {
-                    if (!todo || !todo.title) {
-                        console.error("Найдена некорректная задача", todo);
-                        return null;
-                    }
-
-                    return (
-                        <li className={styles.listItem} key={todo.id}>
-                            {editingId === todo.id ? (
-                                <input
-                                    type="text"
-                                    value={editedTitle}
-                                    onChange={(e) => setEditedTitle(e.target.value)}
-                                />
-                            ) : (
-                                <span>{todo.title}</span>
-                            )}
-                            <div className={styles.buttons}>
-                                {editingId === todo.id ? (
-                                    <>
-                                        <button className={styles.save} onClick={() => handleSaveClick(todo.id, todo.isDone)}>
-                                            Сохранить
-                                        </button>
-                                        <button className={styles.cancel} onClick={handleCancelClick}>
-                                            Отмена
-                                        </button>
-                                    </>
-                                ) : (
-                                    <>
-                                        <input
-                                            type="checkbox"
-                                            checked={todo.isDone}
-                                            onChange={() => handleCheckboxChange(todo.id, todo.isDone)}
-                                        />
-                                        <button
-                                            className={styles.edit}
-                                            onClick={() => handleEditClick(todo.id, todo.title)}
-                                        >
-                                            Редактировать
-                                        </button>
-                                    </>
-                                )}
-                                {!editingId && <button
-                                    className={styles.delete}
-                                    onClick={() => handleDeleteClick(todo.id)}
-                                >
-                                    Удалить
-                                </button>}
-                            </div>
-                        </li>
-                    );
-                })}
+                {todos.map((todo) => (
+                    <ListItem
+                        key={todo.id}
+                        todo={todo}
+                        isEditing={editingId === todo.id}
+                        editedTitle={editingId === todo.id ? editedTitle : ""}
+                        onEditChange={setEditedTitle}
+                        onSave={handleSaveClick}
+                        onCancel={handleCancelClick}
+                        onDelete={handleDeleteClick}
+                        onToggleDone={handleCheckboxChange}
+                        onStartEdit={handleEditClick}
+                    />
+                ))}
             </ul>
         </>
     );
