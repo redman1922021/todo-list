@@ -1,47 +1,28 @@
 import axios from "axios";
-import { MetaResponse, Todo, TodoInfo } from "../types/types.ts";
+import {MetaResponse, Todo, TodoFilter, TodoInfo} from "../types/types.ts";
 
 const API_URL = "https://easydev.club/api/v1/todos";
 
-export const fetchTodos = async (filter: string = "all"): Promise<MetaResponse<Todo, TodoInfo>> => {
-    const response = await axios.get(`${API_URL}`, {
-        params: { filter },
-        headers: {
-            Accept: "application/json",
-        },
-    });
+const apiInstance = axios.create({
+    baseURL: API_URL,
+    headers: {
+        "Content-Type": "application/json",
+    },
+});
 
+export const fetchTodos = async (filter: TodoFilter = TodoFilter.ALL): Promise<MetaResponse<Todo, TodoInfo>> => {
+    const response = await apiInstance.get("", { params: { filter } });
     return response.data;
 };
 
 export const addTodo = async (title: string): Promise<void> => {
-    await axios.post(
-        API_URL,
-        { title, isDone: false },
-        {
-            headers: {
-                "Content-Type": "application/json",
-            },
-        }
-    );
+    await apiInstance.post("", { title, isDone: false });
 };
 
 export const deleteTodo = async (id: number): Promise<void> => {
-    await axios.delete(`${API_URL}/${id}`, {
-        headers: {
-            "Content-Type": "application/json",
-        },
-    });
+    await apiInstance.delete(`/${id}`);
 };
 
 export const updateTodo = async (id: number, newTitle: string, isDone: boolean): Promise<void> => {
-    await axios.put(
-        `${API_URL}/${id}`,
-        { title: newTitle, isDone },
-        {
-            headers: {
-                "Content-Type": "application/json",
-            },
-        }
-    );
+    await apiInstance.put(`/${id}`, { title: newTitle, isDone });
 };

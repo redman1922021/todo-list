@@ -1,76 +1,106 @@
+import {useState} from "react";
 import styles from "./ListItem.module.scss";
 import {Todo} from "../../types/types.ts";
-import {Button, Input} from "antd";
+import {Button, Input, Form, Checkbox, message} from "antd";
+import {deleteTodo, updateTodo} from "../../api/api.ts";
 
 interface ListItemProps {
     todo: Todo;
-    isEditing: boolean;
-    editedTitle: string;
-    onEditChange: (title: string) => void;
-    onSave: (id: number, isDone: boolean) => void;
-    onCancel: () => void;
-    onDelete: (id: number) => void;
-    onToggleDone: (id: number, isDone: boolean) => void;
-    onStartEdit: (id: number, title: string) => void;
+    refreshTodos: () => void;
 }
 
-const ListItem: React.FC<ListItemProps> = ({
-                                               todo,
-                                               isEditing,
-                                               editedTitle,
-                                               onEditChange,
-                                               onSave,
-                                               onCancel,
-                                               onDelete,
-                                               onToggleDone,
-                                               onStartEdit,
-                                           }) => {
+const ListItem: React.FC<ListItemProps> = ({todo, refreshTodos}) => {
+    const [isEditing, setIsEditing] = useState<boolean>(false);
+    const [loading, setLoading] = useState<boolean>(false);
+
+    const handleSave = async (values: { title: string }) => {
+        setLoading(true);
+        try {
+            await updateTodo(todo.id, values.title, todo.isDone);
+            setIsEditing(false);
+            refreshTodos();
+        } catch (error) {
+            console.error("Ошибка при сохранении:", error);
+            message.error("Не удалось сохранить задачу");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleCancel = () => {
+        setIsEditing(false);
+    };
+
+    const handleDelete = async () => {
+        setLoading(true);
+        try {
+            await deleteTodo(todo.id);
+            refreshTodos();
+        } catch (error) {
+            console.error("Ошибка при удалении:", error);
+            message.error("Не удалось удалить задачу");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleToggleDone = async () => {
+        setLoading(true);
+        try {
+            await updateTodo(todo.id, todo.title, !todo.isDone);
+            refreshTodos();
+        } catch (error) {
+            console.error("Ошибка при обновлении статуса:", error);
+            message.error("Не удалось изменить статус задачи");
+        } finally {
+            setLoading(false);
+        }
+    };
 
     return (
         <li className={styles.listItem}>
             {isEditing ? (
-                <Input
-                    type="text"
-                    value={editedTitle}
-                    onChange={(e) => onEditChange(e.target.value)}
-                />
-            ) : (
-                <span>{todo.title}</span>
-            )}
-            <div className={styles.buttons}>
-                {isEditing ? (
-                    <>
-                        <Button className={styles.save} onClick={() => onSave(todo.id, todo.isDone)}>
+                <Form
+                    layout="inline"
+                    onFinish={handleSave}
+                    initialValues={{title: todo.title}}
+                    className={styles.form}
+                >
+                    <Form.Item
+                        name="title"
+                        rules={[
+                            {required: true, message: "Поле не может быть пустым."},
+                            {min: 2, message: "Текст задачи должен содержать хотя бы 2 символа."},
+                            {max: 64, message: "Текст задачи не должен превышать 64 символа."},
+                        ]}
+                        style={{flex: 1}}
+                    >
+                        <Input autoFocus/>
+                    </Form.Item>
+                    <div className={styles.buttonsForm}>
+                        <Checkbox checked={todo.isDone} onChange={handleToggleDone} disabled={loading}/>
+                        <Button type="primary" htmlType="submit" loading={loading}>
                             Сохранить
                         </Button>
-                        <Button className={styles.cancel} onClick={onCancel}>
+                        <Button onClick={handleCancel} disabled={loading}>
                             Отмена
                         </Button>
-                    </>
-                ) : (
-                    <>
-                        <Input
-                            type="checkbox"
-                            checked={todo.isDone}
-                            onChange={() => onToggleDone(todo.id, todo.isDone)}
-                        />
-                        <Button
-                            className={styles.edit}
-                            onClick={() => onStartEdit(todo.id, todo.title)}
-                        >
+                    </div>
+                </Form>
+            ) : (
+                <>
+                    <span>{todo.title}</span>
+                    <div className={styles.buttons}>
+                        <Checkbox checked={todo.isDone} onChange={handleToggleDone} disabled={loading}/>
+                        <Button onClick={() => setIsEditing(true)} disabled={loading}>
                             Редактировать
                         </Button>
-                    </>
-                )}
-                {!isEditing && (
-                    <Button
-                        className={styles.delete}
-                        onClick={() => onDelete(todo.id)}
-                    >
-                        Удалить
-                    </Button>
-                )}
-            </div>
+                        <Button danger onClick={handleDelete} disabled={loading}>
+                            Удалить
+                        </Button>
+                    </div>
+                </>
+            )}
         </li>
     );
 };
