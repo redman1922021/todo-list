@@ -1,76 +1,48 @@
 import styles from "./Header.module.scss";
-import React, {useState} from "react";
 import {addTodo} from "../../api/api.ts";
+import {Button, Input, Form} from "antd";
 
-interface loadTodosProps {
+interface LoadTodosProps {
     loadTodos: () => void;
 }
 
-function Header({ loadTodos }: loadTodosProps) {
+function Header({loadTodos}: LoadTodosProps) {
+    const [form] = Form.useForm();
 
-    const [inputValue, setInputValue] = useState<string>("");
-    const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
-    const handleAddTodo = async (title: string) => {
+    const handleSubmit = async (values: { title: string }) => {
         try {
-            await addTodo(title);
+            await addTodo(values.title);
             await loadTodos();
+            form.resetFields();
         } catch (error) {
             console.error("Ошибка при добавлении задачи:", error);
-        }
-    };
-
-    const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        setInputValue(event.target.value);
-    };
-
-    const handleSubmit = async (event: React.FormEvent) => {
-        event.preventDefault();
-
-        if (inputValue.length < 2) {
-            setErrorMessage("Текст задачи должен содержать хотя бы 2 символа.");
-            return;
-        }
-        if (inputValue.length > 64) {
-            setErrorMessage("Текст задачи не должен превышать 64 символа.");
-            return;
-        }
-        if (inputValue.trim() === "") {
-            setErrorMessage("Поле не может быть пустым.");
-            return;
-        }
-
-        setErrorMessage(null);
-
-        try {
-            await handleAddTodo(inputValue);
-            setInputValue("");
-        } catch (error) {
-            console.error("Ошибка при добавлении задачи:", error);
-            setErrorMessage("Произошла ошибка при добавлении задачи.");
         }
     };
 
     return (
-        <>
-            <header className={styles.header}>
-                <div>Logo</div>
-                <div className={styles.wrapperSearch}>
-                    <input
-                        className={styles.search}
-                        type="text"
-                        placeholder="Введите задачу"
-                        value={inputValue}
-                        onChange={handleChange}
-                    />
-                    {errorMessage && <p className={styles.error}>{errorMessage}</p>}
-                    <button className={styles.buttonHeader} onClick={handleSubmit}>
-                        Добавить
-                    </button>
-                </div>
-            </header>
-        </>
-    )
+        <header className={styles.header}>
+            <div>Logo</div>
+            <div className={styles.wrapperSearch}>
+                <Form form={form} onFinish={handleSubmit} layout="inline">
+                    <Form.Item
+                        name="title"
+                        rules={[
+                            {required: true, message: "Поле не может быть пустым."},
+                            {min: 2, message: "Текст задачи должен содержать хотя бы 2 символа."},
+                            {max: 64, message: "Текст задачи не должен превышать 64 символа."},
+                        ]}
+                    >
+                        <Input className={styles.search} type="text" placeholder="Введите задачу"/>
+                    </Form.Item>
+                    <Form.Item>
+                        <Button className={styles.buttonHeader} htmlType="submit">
+                            Добавить
+                        </Button>
+                    </Form.Item>
+                </Form>
+            </div>
+        </header>
+    );
 }
 
-export default Header
+export default Header;

@@ -1,69 +1,23 @@
-import React, { useState } from "react";
+import {useMemo} from "react";
 import styles from "./List.module.scss";
-import { Todo, TodoFilter, TodoInfo } from "../../types/types.ts";
-import Navigate from "../Navigate/Navigate.tsx";
+import {Todo} from "../../types/types.ts";
 import ListItem from "../ListItem/ListItem.tsx";
 
 interface ListProps {
     todos: Todo[];
-    todoInfo: TodoInfo;
-    onFilterChange: (filter: TodoFilter) => void;
-    onTodoDelete: (id: number) => void;
-    onTodoEdit: (id: number, newTitle: string, isDone: boolean) => void;
+    refreshTodos: () => void;
 }
 
-const List: React.FC<ListProps> = ({
-                                       todos,
-                                       todoInfo,
-                                       onFilterChange,
-                                       onTodoDelete,
-                                       onTodoEdit,
-                                   }) => {
-    const [editingId, setEditingId] = useState<number | null>(null);
-    const [editedTitle, setEditedTitle] = useState<string>("");
+const List: React.FC<ListProps> = ({todos, refreshTodos}) => {
 
-    const handleEditClick = (id: number, title: string) => {
-        setEditingId(id);
-        setEditedTitle(title);
-    };
-
-    const handleSaveClick = (id: number, isDone: boolean) => {
-        onTodoEdit(id, editedTitle, isDone);
-        setEditingId(null);
-    };
-
-    const handleCancelClick = () => {
-        setEditingId(null);
-    };
-
-    const handleDeleteClick = (id: number) => {
-        onTodoDelete(id);
-    };
-
-    const handleCheckboxChange = (id: number, isDone: boolean) => {
-        onTodoEdit(id, editedTitle, !isDone);
-    };
+    const memoizedTodos = useMemo(() => todos, [todos]);
 
     return (
-        <>
-            <Navigate todoInfo={todoInfo} onFilterChange={onFilterChange} />
-            <ul className={styles.list}>
-                {todos.map((todo) => (
-                    <ListItem
-                        key={todo.id}
-                        todo={todo}
-                        isEditing={editingId === todo.id}
-                        editedTitle={editingId === todo.id ? editedTitle : ""}
-                        onEditChange={setEditedTitle}
-                        onSave={handleSaveClick}
-                        onCancel={handleCancelClick}
-                        onDelete={handleDeleteClick}
-                        onToggleDone={handleCheckboxChange}
-                        onStartEdit={handleEditClick}
-                    />
-                ))}
-            </ul>
-        </>
+        <ul className={styles.list}>
+            {memoizedTodos.map((todo) => (
+                <ListItem key={todo.id} todo={todo} refreshTodos={refreshTodos}/>
+            ))}
+        </ul>
     );
 };
 
